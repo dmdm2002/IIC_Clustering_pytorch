@@ -5,10 +5,10 @@ class Param(object):
     def __init__(self):
         super(Param, self).__init__()
         # Path
-        self.ROOT = 'C:/Users/rlawj'
-        self.DATASET_PATH = f'{self.ROOT}/sample_DB/catdog'
-        self.OUTPUT_CKP = f'{self.ROOT}/backup/ckp'
-        self.OUTPUT_LOG = f'{self.ROOT}/backup/log'
+        self.ROOT = 'D:/[논문]/[3]'
+        self.DATASET_PATH = f'{self.ROOT}/DB/2nd_Proposed/1-fold'
+        self.OUTPUT_CKP = f'{self.ROOT}/IIC/backup/ckp'
+        self.OUTPUT_LOG = f'{self.ROOT}/IIC/backup/log'
         self.CKP_LOAD = False
         self.LOAD_CKP_EPCOH = 0
 
@@ -35,9 +35,11 @@ class Param(object):
             ['Valid', 'Accuracy']
         ]
 
+        self.Visualization = True
+
 
         self.LR = 0.01
-        self.BATCHSZ = 1
+        self.BATCHSZ = 16
         self.DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.PRINT_DISPLAY = True
 
