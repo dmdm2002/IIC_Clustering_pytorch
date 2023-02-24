@@ -14,11 +14,9 @@ from Utils.Functinos import CkpHandler, TensorboardHandler, TransformBuilder
 from Utils.iic_loss import CalLoss
 from Utils.ErrorLogger import error_logger
 from Utils.CustomDataset import Datasets
+from Model.cluster.ClusterModel2 import ClusterNetHead
 
-from Model.cluster.ClusterModel import IICModel
-from Model.cluster.TempClusterModel import ClusterNetHead
-
-from RunModules.RunEpoch import RunOneEpoch, EvalOneEpoch
+from RunModules.RunEpoch import TrainOneEpoch, EvalOneEpoch
 
 
 os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
@@ -66,7 +64,7 @@ class Train(Param):
             tr_dataset = Datasets(self.DATASET_PATH, run_type='train', transform=tr_transform)
 
         val_transform = self.transform_builder.set_valid_test_transform()
-        val_dataset = Datasets(self.DATASET_PATH, run_type='test', transform=val_transform)
+        val_dataset = Datasets(self.DATASET_PATH, run_type='test', transform=val_transform, aug_transform=None)
 
         loss_fn = CalLoss()
         optimizer = optim.Adam(model.parameters(), lr=self.LR)
@@ -75,23 +73,23 @@ class Train(Param):
             tr_loader = DataLoader(dataset=tr_dataset, batch_size=self.BATCHSZ, shuffle=True)
             val_loader = DataLoader(dataset=val_dataset, batch_size=self.BATCHSZ, shuffle=False)
 
-            model.train()
-            print('--------------------------------------')
-            print(f'[Now Loop] : Training Classifier!!')
-            print(f'[NOW Training EPOCH] : {ep}/{self.EPOCH}')
-            print('--------------------------------------')
-            for head in self.HeadList:
-                model = RunOneEpoch()(model, head, tr_loader, loss_fn, optimizer, self.tr_disp)
-
-            self.tr_disp.get_avg_losses(length=len(tr_dataset))
-            self.tr_disp.reset()
+            # model.train()
+            # print('--------------------------------------')
+            # print(f'[Now Loop] : Training Classifier!!')
+            # print(f'[NOW Training EPOCH] : {ep}/{self.EPOCH}')
+            # print('--------------------------------------')
+            # for head in self.HeadList:
+            #     model = TrainOneEpoch()(model, head, tr_loader, loss_fn, optimizer, self.tr_disp)
+            #
+            # self.tr_disp.get_avg_losses(length=len(tr_dataset))
+            # self.tr_disp.reset()
 
             model.eval()
             print('--------------------------------------')
             print(f'[Now Loop] : Valid Classifier!!')
             print(f'[NOW VALIDATION EPOCH] : {ep}/{self.EPOCH}')
             print('--------------------------------------')
-            EvalOneEpoch()(model, "B", val_loader, loss_fn, ep, self.valid_disp)
+            EvalOneEpoch()(model, "B", val_loader, ep, self.valid_disp, visualization=self.Visualization)
             self.valid_disp.get_avg_losses(length=len(val_dataset))
             self.valid_disp.reset()
 
