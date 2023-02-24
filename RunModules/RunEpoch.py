@@ -2,11 +2,12 @@ import tqdm
 import torch
 from torch.nn import functional as F
 from Utils.Option import Param
+from Utils.Visualizer import Visualizer
 
 
-class RunOneEpoch(Param):
+class TrainOneEpoch(Param):
     def __init__(self):
-        super(RunOneEpoch, self).__init__()
+        super(TrainOneEpoch, self).__init__()
 
     def run_head_epoch(self, model, head, dataloader, loss_fn, optimizer, disp):
         """
@@ -64,18 +65,16 @@ class EvalOneEpoch(Param):
     def __init__(self):
         super(EvalOneEpoch, self).__init__()
 
-    def run_valid(self, model, head, dataloader, loss_fn, ep, disp):
+    def run_valid(self, model, head, dataloader, ep, disp):
         """
         :param model: Validation model
         :param head: main head(B) or aux head(A)
         :param dataloader: Call Dataset
-        :param loss_fn: IID Loss
         :param ep: Now epoch
         :param disp: Accuracy and loss calculate
         :return: Not
         """
         model = model
-
         with torch.no_grad():
             for idx, (item, _, label, name) in enumerate(tqdm.tqdm(dataloader, desc=f'HEAD({head}) VALIDATION EPOCH [{ep}/{self.HeadEpoch}]')):
                 item = item.to(self.DEVICE)
@@ -87,7 +86,44 @@ class EvalOneEpoch(Param):
                     predict = 0
                     if assignments == label:
                         predict = 1
+
                     disp.record([predict])
 
-    def __call__(self, model, head, dataloader, loss_fn, ep, disp):
-        return self.run_valid(model, head, dataloader, loss_fn, ep, disp)
+    def run_valid_with_visualization(self, model, head, dataloader, ep, disp):
+        """
+        :param model: Validation model
+        :param head: main head(B) or aux head(A)
+        :param dataloader: Call Dataset
+        :param ep: Now epoch
+        :param disp: Accuracy and loss calculate
+        :return: Not
+        """
+        model = model
+        deepfeatures = []
+        actuals = []
+        with torch.no_grad():
+            for idx, (item, _, label, name) in enumerate(
+                    tqdm.tqdm(dataloader, desc=f'HEAD({head}) VALIDATION EPOCH [{ep}/{self.HeadEpoch}]')):
+                item = item.to(self.DEVICE)
+                label = label.to(self.DEVICE)
+
+                deepfeature = model(item, head=head, kmeans_use_features=True)
+                output = model(item, head=head)
+                for i in range(self.NumSubHeads):
+                    deepfeature = deepfeature[i]
+                    assignments = output[i].argmax(dim=1)
+                    predict = 0
+                    predict += (assignments == label).type(torch.float).sum().item()
+
+                    disp.record([predict])
+
+                    deepfeatures += deepfeature.cpu().numpy().tolist()
+                    actuals += label.cpu().numpy().tolist()
+
+        Visualizer()(deepfeatures, actuals, ep)
+
+    def __call__(self, model, head, dataloader, ep, disp, visualization=False):
+        if visualization:
+            return self.run_valid_with_visualization(model, head, dataloader, ep, disp)
+        else:
+            return self.run_valid(model, head, dataloader, ep, disp)
