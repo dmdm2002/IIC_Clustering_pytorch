@@ -73,16 +73,16 @@ class Train(Param):
             tr_loader = DataLoader(dataset=tr_dataset, batch_size=self.BATCHSZ, shuffle=True)
             val_loader = DataLoader(dataset=val_dataset, batch_size=self.BATCHSZ, shuffle=False)
 
-            # model.train()
-            # print('--------------------------------------')
-            # print(f'[Now Loop] : Training Classifier!!')
-            # print(f'[NOW Training EPOCH] : {ep}/{self.EPOCH}')
-            # print('--------------------------------------')
-            # for head in self.HeadList:
-            #     model = TrainOneEpoch()(model, head, tr_loader, loss_fn, optimizer, self.tr_disp)
-            #
-            # self.tr_disp.get_avg_losses(length=len(tr_dataset))
-            # self.tr_disp.reset()
+            model.train()
+            print('--------------------------------------')
+            print(f'[Now Loop] : Training Classifier!!')
+            print(f'[NOW Training EPOCH] : {ep}/{self.EPOCH}')
+            print('--------------------------------------')
+            for head in self.HeadList:
+                model = TrainOneEpoch()(model, head, tr_loader, loss_fn, optimizer, self.tr_disp)
+
+            self.tr_disp.get_avg_losses(length=len(tr_dataset))
+            self.tr_disp.reset()
 
             model.eval()
             print('--------------------------------------')
