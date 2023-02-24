@@ -1,28 +1,30 @@
-# import torch
-# import numpy as np
-# import matplotlib.pyplot as plt
-# from matplotlib.colors import ListedColormap
-#
-# from Utils.Option import Param
-#
-#
-# class Visualizer(Param):
-#     def __init__(self):
-#         super(Visualizer, self).__init__()
-#
-#     def visulization(self, value):
-#         h = .02
-#         x_min, x_max = 0, 1
-#         y_min, y_max = 0, 1
-#
-#         xx, yy = np.meshgrid(np.arange(x_min, x_max, h), np.arange(y_min, y_max, h))
-#         positions = torch.Tensor(np.vstack(list(zip(xx.ravel(), yy.revel())))).to(self.DEVICE)
-#
-#         fig, ax = plt.subplot()
-#         value = value.detach()
-#         value = value.cpu().numpy()
-#         value = value.reshape(xx.shape)
-#
-#         ax.imshow(value, vmin=0, vmax=1)
-#         ax.axis('off')
-#         ax.scatter(50*X[:,0], 50*X[:1])
+import os
+from sklearn.manifold import TSNE
+import numpy as np
+import matplotlib.pyplot as plt
+
+from Utils.Option import Param
+
+
+class Visualizer(Param):
+    def __init__(self):
+        super(Visualizer, self).__init__()
+
+    def tSNE(self, deepfeatures, actuals, ep):
+        tsne = TSNE(n_components=2, random_state=0)
+        clusters = np.array(tsne.fit_transform(np.array(deepfeatures)))
+        actuals = np.array(actuals)
+
+        plt.figure()
+        labels = ['Fake', 'Live']
+        for i, label in zip(range(2), labels):
+            idx = np.where(actuals == i)
+            plt.scatter(clusters[idx, 0], clusters[idx, 1], marker='.', label=label)
+
+        output = f'{self.OUTPUT_LOG}/visualization'
+        os.makedirs(output, exist_ok=True)
+
+        plt.savefig(f'{output}/tSNE_{ep}.png')
+
+    def __call__(self, preds, labels, ep):
+        return self.tSNE(preds, labels, ep)
